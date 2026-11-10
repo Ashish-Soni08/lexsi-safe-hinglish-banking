@@ -98,6 +98,9 @@ def main() -> None:
     ap.add_argument("--out", default="outputs/harden")
     ap.add_argument("--per-topic", type=int, default=12)
     ap.add_argument("--n-aya", type=int, default=400, help="aya red-teaming prompts per language")
+    ap.add_argument("--n-benign", type=int, default=0,
+                    help="OR-Bench-80k 'seemingly toxic but safe' prompts answered helpfully (guards general over-refusal); "
+                         "every OR-Bench-hard-1k prompt is excluded because the eval samples from it")
     args = ap.parse_args()
 
     import sacrebleu
@@ -141,6 +144,12 @@ def main() -> None:
     mix = [{"lang": l, "kind": k, "instruction": q, "response": rng.choice(REFUSALS[l])} for l, k, q in refuse_items]
     help_items = [(l, "victim", q) for l, _, q in victim]
     sp = SamplingParams(temperature=0.3, max_tokens=400)
+    if args.n_benign:
+        from datasets import load_dataset
+        hard = {r["prompt"] for r in load_dataset("bench-llm/or-bench", "or-bench-hard-1k", split="train")}
+        pool = [r["prompt"] for r in load_dataset("bench-llm/or-bench", "or-bench-80k", split="train") if r["prompt"] not in hard]
+        rng.shuffle(pool)
+        help_items += [("en", "benign_edgy", q) for q in pool[: args.n_benign]]
     for items, sys_msg in ((help_items, HELP_SYS),):
         hint = {"en": " The customer wrote in English; reply in English.",
                 "hi": " The customer wrote in Hindi; reply in Hindi using Devanagari script.",
@@ -150,7 +159,7 @@ def main() -> None:
         for (lang, kind, q), o in zip(items, outs):
             a = o.outputs[0].text.strip()
             # Keep only on-language answers, and for refusal items only actual refusals.
-            if lang_ok(lang, a) and (sys_msg is HELP_SYS or is_refusal(a)):
+            if lang_ok(lang, a) and not is_refusal(a):
                 mix.append({"lang": lang, "kind": kind, "instruction": q, "response": a})
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
