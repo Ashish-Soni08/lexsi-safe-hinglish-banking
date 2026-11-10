@@ -8,6 +8,7 @@ hf download --repo-type dataset "$RUNS" fixinst/outputs/sft/train_trilingual.jso
 mkdir -p outputs/sft && cp /tmp/runs/fixinst/outputs/sft/*.jsonl outputs/sft/
 
 python -m lexsi_a.harden_data --out outputs/harden
+python -m lexsi_a.harden_filter outputs/harden/safety_mix.jsonl
 cat outputs/sft/train_trilingual.jsonl outputs/harden/safety_mix.jsonl > /tmp/train_harden.jsonl
 python -m lexsi_a.sft --train /tmp/train_harden.jsonl --out outputs/harden_lora --merged-out /tmp/harden \
   --push ashish-soni08/tiny-aya-fire-banking-harden
