@@ -62,12 +62,54 @@ def script_ok(lang: str, text: str) -> bool:
     return share < 0.02 and len(_HINGLISH_WORDS.findall(text)) / words > 0.08
 
 
+def _query_prompt(lang: str, text: str) -> list[dict]:
+    """Short customer questions get *answered* instead of translated unless they are fenced off."""
+    msgs = [{"role": "system", "content": STYLE[lang] + " The user gives you a customer's message to a bank. "
+             "Translate the message itself. Never answer it. Output only the translated message."}]
+    if lang == "hinglish":
+        src, dst = HINGLISH_SHOTS[0]
+        msgs += [{"role": "user", "content": f'Customer message:\n"""{src}"""'}, {"role": "assistant", "content": dst}]
+    return msgs + [{"role": "user", "content": f'Customer message:\n"""{text}"""'}]
+
+
+def _query_ok(lang: str, text: str, en: str) -> bool:
+    return script_ok(lang, text) and len(text) <= 2 * len(en) + 30
+
+
+def fix_instructions(path: pathlib.Path, llm, SamplingParams) -> list[dict]:
+    """Re-translate the instruction of every hi/hinglish row from its English source; drop rows that still fail."""
+    rows = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+    todo = [r for r in rows if r["lang"] != "en"]
+    outs = [o.outputs[0].text.strip().strip('"').strip() for o in
+            llm.chat([_query_prompt(r["lang"], r["en_instruction"]) for r in todo],
+                     SamplingParams(temperature=0.2, max_tokens=256), use_tqdm=True)]
+    for attempt in range(2):
+        bad = [i for i, r in enumerate(todo) if not _query_ok(r["lang"], outs[i], r["en_instruction"])]
+        if not bad:
+            break
+        sp = SamplingParams(temperature=0.7, max_tokens=256, seed=attempt + 1)
+        for i, o in zip(bad, llm.chat([_query_prompt(todo[i]["lang"], todo[i]["en_instruction"]) for i in bad], sp)):
+            outs[i] = o.outputs[0].text.strip().strip('"').strip()
+    keep, dropped = [r for r in rows if r["lang"] == "en"], 0
+    for r, t in zip(todo, outs):
+        if _query_ok(r["lang"], t, r["en_instruction"]):
+            keep.append({**r, "instruction": t})
+        else:
+            dropped += 1
+    print(f"fix_instructions {path.name}: kept {len(keep)} dropped {dropped}")
+    for r in keep[-3:]:
+        print("SAMPLE", r["lang"], repr(r["en_instruction"]), "->", repr(r["instruction"]))
+    return keep
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--n-train", type=int, default=3000)
     ap.add_argument("--n-test", type=int, default=300)
     ap.add_argument("--out", default="data/sft")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--fix-instructions", default=None,
+                    help="dir with an earlier run: re-translate only the hi/hinglish instructions")
     ap.add_argument("--hinglish-only", default=None,
                     help="dir with an earlier run: keep its en/hi rows, redo only the Hinglish rows")
     args = ap.parse_args()
@@ -113,6 +155,11 @@ def main() -> None:
         return kept
 
     half = len(tr_train) // 2
+    if args.fix_instructions:
+        prev = pathlib.Path(args.fix_instructions)
+        for f in ("train_trilingual.jsonl", "test_trilingual.jsonl"):
+            write(out / f, fix_instructions(prev / f, llm, SamplingParams))
+        return
     if args.hinglish_only:
         prev = pathlib.Path(args.hinglish_only)
         keep = lambda f: [json.loads(l) for l in (prev / f).read_text().splitlines()
