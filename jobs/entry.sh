@@ -8,7 +8,8 @@ pip install -q uv
 git clone -q --depth 1 --branch "$GIT_REF" https://github.com/Ashish-Soni08/lexsi-safe-hinglish-banking /work
 cd /work
 uv pip install --system -q -r requirements.txt "huggingface_hub[cli]"
-export PYTHONPATH=/work/src HF_HUB_ENABLE_HF_TRANSFER=0
+# python:3.12 has no nvcc, so flashinfer's JIT sampler can't build; use vLLM's torch sampler.
+export PYTHONPATH=/work/src HF_HUB_ENABLE_HF_TRANSFER=0 VLLM_USE_FLASHINFER_SAMPLER=0
 mkdir -p results outputs
 status=0
 "$@" 2>&1 | tee results/job.log || status=$?

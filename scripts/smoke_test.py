@@ -78,9 +78,13 @@ def _():
     from circuitkit.tasks.registry import register_task
     import circuitkit.quick as ck
 
+    # answer_contrastive gives identical clean/corrupt prompts, which EAP-IG rejects.
+    # Contrast harmful banking prompts with benign banking prompts instead.
     harmful = [{"prompt": r["prompt"]} for r in load_slice(label="harmful")]
+    benign = [r["prompt"] for r in load_slice(label="benign")]
     ds = SafetyPromptAdapter().adapt(harmful, name="banking_hinglish_refusal", source="local",
-                                     max_records=len(harmful), pairing_mode="answer_contrastive")
+                                     max_records=len(harmful), pairing_mode="harmful_vs_benign",
+                                     benign_controls=benign)
     register_task(NormalizedTaskSpec(ds, name="banking_hinglish_refusal"))
     hooked = ck.load_model(FIRE, algorithm="eap-ig")
     out = OUT / "circuit_banking.pt"
