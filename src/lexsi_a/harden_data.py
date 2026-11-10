@@ -63,6 +63,27 @@ def is_refusal(text: str) -> bool:
     return len(text) < 700 and bool(_DECLINE.search(text[:300]))
 
 
+# Aya Expanse often complies with fraud requests or answers Hinglish in Devanagari, so refusals are
+# templated (varied, per language) instead of generated. Helpful victim answers are still generated.
+REFUSALS = {
+    "en": ["I'm sorry, but I can't help with that. It could harm people or break the law.",
+           "I can't assist with this request. If you're dealing with fraud, please contact your bank's official helpline or call the cybercrime helpline 1930.",
+           "Sorry, I won't help with that. I can help with genuine banking questions, like blocking a card or reporting a suspicious transaction.",
+           "I'm not able to help with this. Please use official bank channels for anything related to your account.",
+           "I can't do that. Requests like this can cause real financial harm. Is there something else about your own account I can help with?"],
+    "hi": ["माफ़ कीजिए, मैं इसमें मदद नहीं कर सकता। इससे लोगों को नुकसान हो सकता है या यह कानून के खिलाफ़ है।",
+           "मैं इस अनुरोध में सहायता नहीं कर सकता। अगर आप किसी धोखाधड़ी से परेशान हैं, तो अपने बैंक की आधिकारिक helpline या साइबर अपराध helpline 1930 पर संपर्क करें।",
+           "क्षमा करें, मैं ऐसा नहीं कर सकता। मैं आपकी असली banking ज़रूरतों में मदद कर सकता हूँ, जैसे card block करना या संदिग्ध लेनदेन की शिकायत करना।",
+           "मैं इसमें आपकी मदद नहीं कर सकता। अपने account से जुड़े किसी भी काम के लिए बैंक के आधिकारिक माध्यमों का इस्तेमाल करें।",
+           "माफ़ कीजिए, ऐसे अनुरोध से असली आर्थिक नुकसान हो सकता है, इसलिए मैं इसमें मदद नहीं करूँगा। क्या आपके अपने account से जुड़ा कोई और सवाल है?"],
+    "hinglish": ["Sorry, main isme madad nahi kar sakta. Isse logon ka nuksan ho sakta hai ya ye illegal hai.",
+                 "Main is request mein help nahi kar sakta. Agar aap kisi fraud se pareshan hain toh apne bank ki official helpline ya cybercrime helpline 1930 pe call karein.",
+                 "Maaf kijiye, main aisa nahi kar sakta. Main aapke genuine banking sawaalon mein help kar sakta hoon, jaise card block karna ya suspicious transaction report karna.",
+                 "Main isme aapki madad nahi kar sakta. Apne account se related kisi bhi kaam ke liye bank ke official channels use karein.",
+                 "Sorry, aisi request se asli financial nuksan ho sakta hai, isliye main help nahi karunga. Kya aapke apne account ke baare mein koi aur sawaal hai?"],
+}
+
+
 def _lines(text: str) -> list[str]:
     out = []
     for l in text.splitlines():
@@ -117,10 +138,10 @@ def main() -> None:
     print({k: len(v) for k, v in aya.items()})
 
     refuse_items = [(l, "fraud", q) for l, _, q in fraud] + [(l, "aya_redteam", q) for l in aya for q in aya[l]]
+    mix = [{"lang": l, "kind": k, "instruction": q, "response": rng.choice(REFUSALS[l])} for l, k, q in refuse_items]
     help_items = [(l, "victim", q) for l, _, q in victim]
     sp = SamplingParams(temperature=0.3, max_tokens=400)
-    mix = []
-    for items, sys_msg in ((refuse_items, REFUSE_SYS), (help_items, HELP_SYS)):
+    for items, sys_msg in ((help_items, HELP_SYS),):
         hint = {"en": " The customer wrote in English; reply in English.",
                 "hi": " The customer wrote in Hindi; reply in Hindi using Devanagari script.",
                 "hinglish": " The customer wrote in Hinglish; reply in Hinglish using ONLY the Latin alphabet, no Devanagari."}
