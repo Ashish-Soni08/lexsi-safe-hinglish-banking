@@ -9,3 +9,4 @@ transformers==5.19.0
 trl==1.7.1
 peft==0.21.2
 datasets
+sacrebleu==2.5.1

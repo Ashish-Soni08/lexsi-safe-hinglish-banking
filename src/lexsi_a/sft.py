@@ -33,6 +33,8 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=2)
     ap.add_argument("--lr", type=float, default=2e-4)
     ap.add_argument("--max-steps", type=int, default=None)
+    ap.add_argument("--merged-out", default=None, help="also save the merged bf16 model here")
+    ap.add_argument("--push", default=None, help="push the merged model to this private HF repo")
     args = ap.parse_args()
 
     from aligntune.core.backend_factory import create_sft_trainer
@@ -50,6 +52,31 @@ def main() -> None:
     trainer.train()
     trainer.save_model(str(out))
     print("saved adapter ->", out)
+    if args.merged_out or args.push:
+        merge(args.model, out, args.merged_out or "outputs/sft_merged", args.push)
+
+
+def merge(model: str, adapter: pathlib.Path, dst: str, push: str | None) -> None:
+    import gc
+
+    import torch
+    from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    gc.collect()
+    torch.cuda.empty_cache()
+    base = AutoModelForCausalLM.from_pretrained(model, dtype=torch.bfloat16)
+    merged = PeftModel.from_pretrained(base, str(adapter)).merge_and_unload()
+    tok = AutoTokenizer.from_pretrained(model)
+    merged.save_pretrained(dst)
+    tok.save_pretrained(dst)
+    print("saved merged ->", dst)
+    if push:
+        from huggingface_hub import HfApi
+        api = HfApi()
+        api.create_repo(push, private=True, exist_ok=True)
+        api.upload_folder(folder_path=dst, repo_id=push, commit_message="SFT merged model")
+        print("pushed ->", push)
 
 
 if __name__ == "__main__":
