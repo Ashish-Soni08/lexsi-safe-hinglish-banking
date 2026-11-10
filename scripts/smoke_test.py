@@ -151,7 +151,7 @@ def _():
                 remove_columns=ds.column_names)
     local = OUT / "sft_tiny"
     ds.to_json(str(local) + ".jsonl")
-    trainer = create_sft_trainer(model_name=FIRE, dataset_name="json", data_files=str(local) + ".jsonl",
+    trainer = create_sft_trainer(model_name=FIRE, dataset_name=str(local) + ".jsonl",
                                  backend="trl", output_dir=str(local), num_epochs=1, max_steps=20,
                                  batch_size=4, learning_rate=2e-4, max_seq_length=512, use_peft=True,
                                  lora_r=16, lora_alpha=32, bf16=True)

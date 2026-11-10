@@ -10,8 +10,6 @@ import pathlib
 import re
 from typing import Iterable
 
-import torch
-
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SLICE = ROOT / "data" / "banking_safety_slice.jsonl"
 
@@ -54,15 +52,17 @@ def chat_inputs(tokenizer, prompts: list[str], system: str | None = SYSTEM_PROMP
     return tokenizer(texts, return_tensors="pt", padding=True, add_special_tokens=False)
 
 
-@torch.no_grad()
 def generate(model, tokenizer, prompts: list[str], max_new_tokens: int = 160, batch_size: int = 16) -> list[str]:
     """Greedy chat generation with plain transformers (works on hooked/patched models)."""
+    import torch
+
     outs: list[str] = []
     device = next(model.parameters()).device
     for i in range(0, len(prompts), batch_size):
         enc = chat_inputs(tokenizer, prompts[i : i + batch_size]).to(device)
-        gen = model.generate(**enc, max_new_tokens=max_new_tokens, do_sample=False,
-                             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id)
+        with torch.no_grad():
+            gen = model.generate(**enc, max_new_tokens=max_new_tokens, do_sample=False,
+                                 pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id)
         outs += tokenizer.batch_decode(gen[:, enc["input_ids"].shape[1]:], skip_special_tokens=True)
     return outs
 
