@@ -27,9 +27,24 @@ STYLE = {
 }
 
 
+# Few-shot turns: without them Aya Expanse answers "Hinglish" requests in Devanagari ~95% of the time.
+HINGLISH_SHOTS = [
+    ("I need to block my debit card because I lost it. How do I do it?",
+     "Mera debit card kho gaya hai, isliye mujhe use block karna hai. Kaise karun?"),
+    ("Certainly! To check your account balance, log in to the mobile app and tap 'Accounts'. "
+     "If you need further help, contact our customer support at {{Customer Support Phone Number}}.",
+     "Bilkul! Apna account balance check karne ke liye mobile app mein login karein aur 'Accounts' pe tap karein. "
+     "Agar aur help chahiye toh hamare customer support se {{Customer Support Phone Number}} pe contact karein."),
+]
+_HINGLISH_WORDS = re.compile(r"\b(hai|hain|ka|ki|ke|ko|mein|aap|apna|apne|karna|karein|karun|kaise|kya|nahi|liye|se|toh|chahiye|hoga|par|pe)\b", re.I)
+
+
 def _prompt(lang: str, text: str) -> list[dict]:
-    return [{"role": "system", "content": STYLE[lang] + " Output only the translation, nothing else."},
-            {"role": "user", "content": text}]
+    msgs = [{"role": "system", "content": STYLE[lang] + " Output only the translation, nothing else."}]
+    if lang == "hinglish":
+        for src, dst in HINGLISH_SHOTS:
+            msgs += [{"role": "user", "content": src}, {"role": "assistant", "content": dst}]
+    return msgs + [{"role": "user", "content": text}]
 
 
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
@@ -40,7 +55,11 @@ def script_ok(lang: str, text: str) -> bool:
     if not text.strip():
         return False
     share = len(_DEVANAGARI.findall(text)) / max(1, len(re.sub(r"\s", "", text)))
-    return share > 0.3 if lang == "hi" else share < 0.02
+    if lang == "hi":
+        return share > 0.3
+    # Hinglish: Latin script AND actually Hindi (not an untranslated English copy).
+    words = max(1, len(text.split()))
+    return share < 0.02 and len(_HINGLISH_WORDS.findall(text)) / words > 0.08
 
 
 def main() -> None:
@@ -49,6 +68,8 @@ def main() -> None:
     ap.add_argument("--n-test", type=int, default=300)
     ap.add_argument("--out", default="data/sft")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--hinglish-only", default=None,
+                    help="dir with an earlier run: keep its en/hi rows, redo only the Hinglish rows")
     args = ap.parse_args()
 
     from vllm import LLM, SamplingParams
@@ -70,6 +91,15 @@ def main() -> None:
         for r in rows:
             convs += [_prompt(lang, r["instruction"]), _prompt(lang, r["response"])]
         outs = [o.outputs[0].text.strip() for o in llm.chat(convs, sp, use_tqdm=True)]
+        for attempt in range(2):  # resample failures at higher temperature
+            bad = [i for i, t in enumerate(outs) if not script_ok(lang, t)]
+            if not bad:
+                break
+            retry = SamplingParams(temperature=0.7, max_tokens=1024, seed=attempt + 1)
+            for i, o in zip(bad, llm.chat([convs[i] for i in bad], retry, use_tqdm=False)):
+                outs[i] = o.outputs[0].text.strip()
+        for t in [t for t in outs if not script_ok(lang, t)][:3]:
+            print(f"REJECTED {lang}: {t[:200]!r}")
         kept, dropped = [], 0
         for i, r in enumerate(rows):
             ins, resp = outs[2 * i], outs[2 * i + 1]
@@ -83,6 +113,14 @@ def main() -> None:
         return kept
 
     half = len(tr_train) // 2
+    if args.hinglish_only:
+        prev = pathlib.Path(args.hinglish_only)
+        keep = lambda f: [json.loads(l) for l in (prev / f).read_text().splitlines()
+                          if l.strip() and json.loads(l)["lang"] != "hinglish"]
+        rows_hing = translate(tr_train.select(range(half, len(tr_train))), "hinglish", "train")
+        write(out / "train_trilingual.jsonl", keep("train_trilingual.jsonl") + rows_hing)
+        write(out / "test_trilingual.jsonl", keep("test_trilingual.jsonl") + translate(test, "hinglish", "test"))
+        return
     rows_hi = translate(tr_train.select(range(half)), "hi", "train")
     rows_hing = translate(tr_train.select(range(half, len(tr_train))), "hinglish", "train")
     rows_en = [{"id": f"train-en-{i}", "lang": "en", "intent": r["intent"], "category": r["category"],

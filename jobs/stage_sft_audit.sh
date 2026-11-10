@@ -6,8 +6,8 @@ RUNS=ashish-soni08/lexsi-a-runs
 SFT_REPO=${SFT_REPO:-ashish-soni08/tiny-aya-fire-banking-sft}
 FIRE=CohereLabs/tiny-aya-fire
 
-hf download --repo-type dataset "$RUNS" --include "translate/outputs/sft/*" --local-dir /tmp/runs --quiet
-mkdir -p outputs/sft && cp /tmp/runs/translate/outputs/sft/*.jsonl outputs/sft/
+hf download --repo-type dataset "$RUNS" --include "${DATA_RUN:-hinglish}/outputs/sft/*" --local-dir /tmp/runs --quiet
+mkdir -p outputs/sft && cp /tmp/runs/${DATA_RUN:-hinglish}/outputs/sft/*.jsonl outputs/sft/
 wc -l outputs/sft/*.jsonl
 
 python -m lexsi_a.sft --train outputs/sft/train_trilingual.jsonl --out outputs/sft_lora \
