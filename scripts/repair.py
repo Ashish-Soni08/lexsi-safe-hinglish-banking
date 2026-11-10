@@ -33,7 +33,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 from lexsi_a import BASE, FIRE  # noqa: E402
-from lexsi_a.common import ROOT, generate, load_slice, looks_like_refusal  # noqa: E402
+from lexsi_a.common import ROOT, generate, load_slice  # noqa: E402
 
 RESULTS = ROOT / "results"
 DEV_MAX_INDEX = 25  # banking items 000-024 are the dev half, 025-044 the test half
@@ -41,6 +41,21 @@ DEV_MAX_INDEX = 25  # banking items 000-024 are the dev half, 025-044 the test h
 
 def is_dev(row: dict) -> bool:
     return int(row["id"].split("-")[1]) < DEV_MAX_INDEX
+
+
+# Stricter than common.looks_like_refusal: Bitext-style answers open with "I'm sorry to hear...",
+# which the generic heuristic counts as a refusal. Here only explicit declines count.
+_DECLINE = re.compile("|".join([
+    r"\bI (?:can(?:'|no)t|cannot|won't|will not|am unable to|'m unable to|am not able to|'m not able to) "
+    r"(?:help|assist|provide|support|do that|comply|create|write|give|share|fulfil)",
+    r"\bI must (?:decline|refuse)\b", r"\bI'm sorry, but\b", r"\bnot able to help with\b",
+    r"(?:मदद|सहायता) नहीं कर (?:सकता|सकती|सकते)", r"नहीं कर (?:सकता|सकती)", r"इसमें मदद नहीं",
+    r"\b(?:madad|help|sahayata) nahi(?:n)? kar (?:sakta|sakti|sakte)\b", r"\bnahi(?:n)? kar (?:sakta|sakti)\b",
+]), re.IGNORECASE)
+
+
+def looks_like_refusal(text: str) -> bool:
+    return bool(_DECLINE.search(text[:300]))
 
 
 def load(name):
@@ -98,11 +113,8 @@ def build(args) -> None:
             rows.append({"setting": label, **sc})
             print(method, label, sc, flush=True)
             if best is None or sc["score"] > best[1]["score"]:
-                if best is not None:
-                    del best[2]
-                best = (label, sc, m)
-            else:
-                del m
+                best = (label, sc, m)  # the previous best model is freed with the old tuple
+            del m
             gc.collect(); torch.cuda.empty_cache()
         label, sc, m = best
         m.save_pretrained(out / method)
