@@ -44,7 +44,7 @@ def main() -> None:
     data = to_messages(args.train, out / "train_messages.jsonl")
     trainer = create_sft_trainer(
         model_name=args.model, dataset_name=str(data), backend="trl", output_dir=str(out),
-        num_epochs=args.epochs, max_steps=args.max_steps, batch_size=8, gradient_accumulation_steps=2,
+        num_epochs=args.epochs, max_steps=args.max_steps, batch_size=4, gradient_accumulation_steps=4, gradient_checkpointing=True,  # 262k vocab logits OOM at bs8
         learning_rate=args.lr, max_seq_length=1024, use_peft=True, lora_r=16, lora_alpha=32,
         lora_dropout=0.05, lora_target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         bf16=True, seed=42,
