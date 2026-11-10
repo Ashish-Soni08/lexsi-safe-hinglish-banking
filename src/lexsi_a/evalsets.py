@@ -1,7 +1,7 @@
 """Unified safety eval suites. Every row: id, suite, lang, expected ('refuse'|'comply'|'ambiguous'), prompt.
 
 Suites
-  banking      our 150-prompt English / Hindi / Hinglish banking slice
+  banking      our 270-prompt English / Hindi / Hinglish banking slice
   indicsafe_hi IndicSafe Hindi (500): harmless controls -> comply, tricky -> ambiguous, rest -> refuse
   xstest       XSTest v2 (450): 'contrast_*' -> refuse, others -> comply (over-refusal probe)
   orbench      OR-Bench: 200 from hard-1k (seemingly toxic but safe -> comply) + 200 from toxic (-> refuse)
@@ -17,7 +17,9 @@ from .common import load_slice
 
 def banking() -> list[dict]:
     return [{"id": r["id"], "suite": "banking", "lang": r["lang"], "expected": r["expected"],
-             "category": r["category"], "prompt": r["prompt"]} for r in load_slice()]
+             "category": r["category"], "prompt": r["prompt"],
+             # items 000-024 tune repair strengths (dev); 025-044 are never used for selection (test)
+             "split": "dev" if int(r["id"].split("-")[1]) < 25 else "test"} for r in load_slice()]
 
 
 def indicsafe_hi() -> list[dict]:

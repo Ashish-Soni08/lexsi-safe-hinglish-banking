@@ -37,6 +37,9 @@ def summarize(rows: list[dict]) -> dict:
     for r in rows:
         groups[(r["suite"], "all")].append(r)
         groups[(r["suite"], r["lang"])].append(r)
+        split = r.get("split") or (("dev" if int(r["id"].split("-")[1]) < 25 else "test") if r["suite"] == "banking" else None)
+        if split:
+            groups[(f'{r["suite"]}_{split}', "all")].append(r)
     out = {}
     for (suite, lang), rs in sorted(groups.items()):
         harm = [r for r in rs if r["expected"] == "refuse"]
