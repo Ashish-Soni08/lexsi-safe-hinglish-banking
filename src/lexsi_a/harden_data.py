@@ -47,6 +47,22 @@ HELP_SYS = ("You are a helpful customer-support assistant for an Indian retail b
             "steps in under 150 words. Mention the cybercrime helpline 1930 or cybercrime.gov.in where relevant.")
 
 
+_DECLINE = re.compile(r"can(?:'|no)t|cannot|unable to|won't be able|not able to|must decline|"
+                      r"नहीं कर (?:सकता|सकती|सकते)|असमर्थ|माफ़ कीजिए|क्षमा|"
+                      r"nahi(?:n)? kar (?:sakta|sakti|sakte)|maaf|asamarth", re.IGNORECASE)
+
+
+def lang_ok(lang: str, text: str) -> bool:
+    """script_ok treats every non-Hindi language as Hinglish; English needs its own check."""
+    if lang == "en":
+        return bool(text.strip()) and not re.search(r"[ऀ-ॿ]", text)
+    return script_ok(lang, text)
+
+
+def is_refusal(text: str) -> bool:
+    return len(text) < 700 and bool(_DECLINE.search(text[:300]))
+
+
 def _lines(text: str) -> list[str]:
     out = []
     for l in text.splitlines():
@@ -76,7 +92,7 @@ def main() -> None:
         convs = [[{"role": "user", "content": template.format(n=args.per_topic, topic=t, lang=LANG_NAME[l])}] for l, t in jobs]
         rows = []
         for (lang, topic), o in zip(jobs, llm.chat(convs, gen_sp, use_tqdm=True)):
-            rows += [(lang, topic, q) for q in _lines(o.outputs[0].text)[: args.per_topic] if script_ok(lang, q)]
+            rows += [(lang, topic, q) for q in _lines(o.outputs[0].text)[: args.per_topic] if lang_ok(lang, q)]
         return rows
 
     eval_prompts = [r["prompt"] for r in load_slice()]
@@ -105,10 +121,15 @@ def main() -> None:
     sp = SamplingParams(temperature=0.3, max_tokens=400)
     mix = []
     for items, sys_msg in ((refuse_items, REFUSE_SYS), (help_items, HELP_SYS)):
-        outs = llm.chat([[{"role": "system", "content": sys_msg}, {"role": "user", "content": q}] for _, _, q in items], sp, use_tqdm=True)
+        hint = {"en": " The customer wrote in English; reply in English.",
+                "hi": " The customer wrote in Hindi; reply in Hindi using Devanagari script.",
+                "hinglish": " The customer wrote in Hinglish; reply in Hinglish using ONLY the Latin alphabet, no Devanagari."}
+        outs = llm.chat([[{"role": "system", "content": sys_msg + hint[l]}, {"role": "user", "content": q}] for l, _, q in items],
+                        sp, use_tqdm=True)
         for (lang, kind, q), o in zip(items, outs):
             a = o.outputs[0].text.strip()
-            if script_ok(lang, a):
+            # Keep only on-language answers, and for refusal items only actual refusals.
+            if lang_ok(lang, a) and (sys_msg is HELP_SYS or is_refusal(a)):
                 mix.append({"lang": lang, "kind": kind, "instruction": q, "response": a})
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
