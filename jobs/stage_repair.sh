@@ -4,11 +4,13 @@
 set -euo pipefail
 RUNS=ashish-soni08/lexsi-a-runs
 SFT=${SFT_REPO:-ashish-soni08/tiny-aya-fire-banking-sft}
-hf download --repo-type dataset "$RUNS" --include "smoke2/results/circuit_banking_scores.json" "fixinst/outputs/sft/test_trilingual.jsonl" --local-dir /tmp/runs --quiet
+# Explicit filenames (hf download ignores --include when filenames are given).
+hf download --repo-type dataset "$RUNS" smoke2/results/circuit_banking_scores.json fixinst/outputs/sft/test_trilingual.jsonl --local-dir /tmp/runs --quiet
 mkdir -p outputs/sft && cp /tmp/runs/fixinst/outputs/sft/test_trilingual.jsonl outputs/sft/
 hf download "$SFT" --local-dir /tmp/sft --quiet
 # Reuse Fire / SFT generations, utility scores and judge votes from the sft-audit run.
-hf download --repo-type dataset "$RUNS" --include "sft-audit/results/gens/*" "sft-audit/results/utility/*" --local-dir /tmp/prev --quiet
+hf download --repo-type dataset "$RUNS" --include "sft-audit/results/gens/*" --local-dir /tmp/prev --quiet
+hf download --repo-type dataset "$RUNS" --include "sft-audit/results/utility/*" --local-dir /tmp/prev --quiet
 mkdir -p results/gens results/utility && cp /tmp/prev/sft-audit/results/gens/* results/gens/ && cp /tmp/prev/sft-audit/results/utility/* results/utility/
 
 python scripts/repair.py build --sft /tmp/sft --circuit /tmp/runs/smoke2/results/circuit_banking_scores.json --out /tmp/rep
