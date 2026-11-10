@@ -91,7 +91,19 @@ def build(args) -> None:
     mlp = ["gate_proj", "up_proj", "down_proj"]
     info = SimpleNamespace(layer_suggestions=None)
 
-    candidates = {
+    import random
+    rng = random.Random(0)
+    rand8 = sorted(rng.sample([i for i in range(len(all_layers) + 1) if i not in top_layers], len(top_layers)))
+    # Round 2: circuit-guided *partial revert* (C-ΔΘ with negative = the SFT model itself, so the update is
+    # s * (Fire - SFT) on the masked weights), against the same revert on 8 random layers as a control.
+    revert = lambda layers, s, mods=None: (lambda m: apply_ctheta(m, positive=fire, negative=sft, circuit_info=info,
+                                                                   strength=s, layer_subset=layers, target_modules=mods))
+    candidates_r2 = {
+        "revert_top8": [(f"strength={s}", revert(top_layers, s)) for s in (0.5, 1.0)],
+        "revert_rand8": [(f"strength={s}", revert(rand8, s)) for s in (0.5, 1.0)],
+        "revert_all": [(f"strength={s}", revert(all_layers, s)) for s in (0.25, 0.5)],
+    }
+    candidates = candidates_r2 if args.round == 2 else {
         "resta": [(f"alpha={a}", lambda m, a=a: apply_resta(m, base=base, aligned=fire, alpha=a)) for a in (0.25, 0.5, 1.0)],
         "safemerge": [("default", lambda m: apply_safemerge(m, base=base, aligned=fire))],
         "ctheta_all": [(f"strength={s}", lambda m, s=s: apply_ctheta(m, positive=fire, negative=base, circuit_info=info,
@@ -101,10 +113,12 @@ def build(args) -> None:
                                                                         strength=s, layer_subset=top_layers, target_modules=mlp))
                         for s in (0.5, 1.0, 2.0)],
     }
-    report = {"dev_n": len(dev), "circuit": {"all_layers": all_layers, "top8_layers": top_layers},
+    report = {"dev_n": len(dev), "circuit": {"all_layers": all_layers, "top8_layers": top_layers, "random8_layers": rand8},
               "reference": {"fire": dev_score(fire, tok, dev), "sft": dev_score(sft, tok, dev)}, "methods": {}}
     print("reference", report["reference"], flush=True)
     out = pathlib.Path(args.out)
+    RESULTS.mkdir(exist_ok=True)
+    sweep_file = RESULTS / ("repair_sweep.json" if args.round == 1 else f"repair_sweep_r{args.round}.json")
     for method, cands in candidates.items():
         rows, best = [], None
         for label, fn in cands:
@@ -123,7 +137,7 @@ def build(args) -> None:
         del m, best
         gc.collect(); torch.cuda.empty_cache()
         RESULTS.mkdir(exist_ok=True)
-        (RESULTS / "repair_sweep.json").write_text(json.dumps(report, indent=1))
+        sweep_file.write_text(json.dumps(report, indent=1))
 
     # Steering sweep (runtime hooks on the SFT model).
     from safetune.interventions.steer.refusal_direction import RefusalDirectionConfig, extract_refusal_direction
@@ -133,7 +147,8 @@ def build(args) -> None:
     direction, layer, _ = extract_refusal_direction(sft, tok, harm, ben, RefusalDirectionConfig(select_directions=False))
     torch.save({"direction": direction.cpu(), "layer": int(layer)}, out / "steer_direction.pt")
     rows = []
-    for layers, strengths in (([int(layer)], (4.0, 8.0, 16.0, 32.0)), (None, (0.25, 0.5, 1.0))):
+    grid = (([int(layer)], (4.0, 8.0, 16.0, 32.0)), (None, (0.25, 0.5, 1.0))) if args.round == 1 else ((None, (1.5, 2.0, 3.0)),)
+    for layers, strengths in grid:
         for s in strengths:
             h = RefusalDirectionModel(sft, direction=direction, mode="steer", strength=s, layers=layers).install()
             try:
@@ -145,14 +160,16 @@ def build(args) -> None:
             print("steer", rows[-1], flush=True)
     best = max(rows, key=lambda r: r["score"])
     report["methods"]["steer"] = {"chosen": best["setting"], "chosen_dev": best, "sweep": rows, "layer": int(layer)}
-    (RESULTS / "repair_sweep.json").write_text(json.dumps(report, indent=1))
+    sweep_file.write_text(json.dumps(report, indent=1))
 
 
 def steer(args) -> None:
     from safetune.steer import RefusalDirectionModel
     from lexsi_a.evalsets import load_all
 
-    sweep = json.loads(pathlib.Path(args.sweep).read_text())["methods"]["steer"]["chosen_dev"]
+    path = args.sweep or RESULTS / ("repair_sweep.json" if args.round == 1 else f"repair_sweep_r{args.round}.json")
+    sweep = json.loads(pathlib.Path(path).read_text())["methods"]["steer"]["chosen_dev"]
+    tag = "steer" if args.round == 1 else f"steer_r{args.round}"
     saved = torch.load(pathlib.Path(args.out) / "steer_direction.pt")
     tok = AutoTokenizer.from_pretrained(FIRE)
     sft = load(args.sft)
@@ -163,9 +180,9 @@ def steer(args) -> None:
     h.remove()
     gens = RESULTS / "gens"
     gens.mkdir(parents=True, exist_ok=True)
-    with (gens / "steer.jsonl").open("w") as f:
+    with (gens / f"{tag}.jsonl").open("w") as f:
         for r, a in zip(rows, answers):
-            f.write(json.dumps({**r, "model": "steer", "answer": a}, ensure_ascii=False) + "\n")
+            f.write(json.dumps({**r, "model": tag, "answer": a}, ensure_ascii=False) + "\n")
     print("wrote", len(rows), "steer gens")
 
 
@@ -174,7 +191,8 @@ if __name__ == "__main__":
     ap.add_argument("cmd", choices=["build", "steer"])
     ap.add_argument("--sft", required=True)
     ap.add_argument("--circuit", default=None)
-    ap.add_argument("--sweep", default=str(RESULTS / "repair_sweep.json"))
+    ap.add_argument("--sweep", default=None)
     ap.add_argument("--out", default="/tmp/rep")
+    ap.add_argument("--round", type=int, default=1)
     a = ap.parse_args()
     build(a) if a.cmd == "build" else steer(a)
