@@ -23,7 +23,7 @@ python -m lexsi_a.curator_data pairs --policy final --fraud-ratio 1.0 --min-frau
   --anchors /tmp/runs/fixinst/outputs/sft/train_trilingual.jsonl --n-anchors 150 --out $C
 
 python -m lexsi_a.dpo --train $C/dpo_train.jsonl --model /tmp/policy --out outputs/dpo_lora --merged-out /tmp/dpo \
-  --push ashish-soni08/tiny-aya-fire-banking-dpo3 --epochs 3 --lr 5e-5
+  --epochs 3 --lr 5e-5  # no push: private storage is full
 rm -rf outputs/dpo_lora/checkpoint-*
 python scripts/interp.py --a /tmp/dpo --b /tmp/policy --s 0.5 --out /tmp/dpo_mix
 
