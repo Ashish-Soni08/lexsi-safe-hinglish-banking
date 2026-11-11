@@ -1,0 +1,437 @@
+{
+ "fire": {
+  "description": "Tiny Aya Fire (aligned starting point)",
+  "chrf": 22.19,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.5667,
+   "harmful_compliance": 0.3,
+   "over_refusal": 0.0167
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.4667,
+   "harmful_compliance": 0.3111,
+   "over_refusal": 0.0444
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.5758,
+   "harmful_compliance": 0.0273,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.82,
+   "harmful_compliance": 0.02,
+   "over_refusal": 0.08
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.945,
+   "harmful_compliance": 0.01,
+   "over_refusal": 0.495
+  }
+ },
+ "sft": {
+  "description": "LoRA SFT on trilingual Bitext banking data",
+  "chrf": 48.84,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.4333,
+   "harmful_compliance": 0.4,
+   "over_refusal": 0.05
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.4444,
+   "harmful_compliance": 0.4,
+   "over_refusal": 0.1333
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.5424,
+   "harmful_compliance": 0.0364,
+   "over_refusal": 0.032
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.82,
+   "harmful_compliance": 0.03,
+   "over_refusal": 0.192
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.83,
+   "harmful_compliance": 0.065,
+   "over_refusal": 0.34
+  }
+ },
+ "resta": {
+  "description": "SFT + ReSta (alpha tuned on dev)",
+  "chrf": 44.96,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.5,
+   "harmful_compliance": 0.3333,
+   "over_refusal": 0.0667
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.4667,
+   "harmful_compliance": 0.3556,
+   "over_refusal": 0.0889
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.5424,
+   "harmful_compliance": 0.0273,
+   "over_refusal": 0.056
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.73,
+   "harmful_compliance": 0.095,
+   "over_refusal": 0.2
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.765,
+   "harmful_compliance": 0.115,
+   "over_refusal": 0.24
+  }
+ },
+ "safemerge": {
+  "description": "SFT + SafeMerge",
+  "chrf": 47.7,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.4,
+   "harmful_compliance": 0.3667,
+   "over_refusal": 0.0167
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.3111,
+   "harmful_compliance": 0.5333,
+   "over_refusal": 0.0222
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.5697,
+   "harmful_compliance": 0.0182,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.8,
+   "harmful_compliance": 0.03,
+   "over_refusal": 0.264
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.86,
+   "harmful_compliance": 0.06,
+   "over_refusal": 0.435
+  }
+ },
+ "ctheta_all": {
+  "description": "SFT + C-ΔΘ (Fire − Base) on all circuit layers",
+  "chrf": 44.46,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.35,
+   "harmful_compliance": 0.4,
+   "over_refusal": 0.0333
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.2222,
+   "harmful_compliance": 0.6,
+   "over_refusal": 0.0222
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.4879,
+   "harmful_compliance": 0.0212,
+   "over_refusal": 0.064
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.875,
+   "harmful_compliance": 0.02,
+   "over_refusal": 0.324
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.89,
+   "harmful_compliance": 0.035,
+   "over_refusal": 0.56
+  }
+ },
+ "ctheta_top8": {
+  "description": "SFT + C-ΔΘ (Fire − Base) on the top-8 circuit layers, MLP",
+  "chrf": 42.72,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.45,
+   "harmful_compliance": 0.3667,
+   "over_refusal": 0.0833
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.5556,
+   "harmful_compliance": 0.4,
+   "over_refusal": 0.1556
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.5636,
+   "harmful_compliance": 0.0364,
+   "over_refusal": 0.064
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.825,
+   "harmful_compliance": 0.025,
+   "over_refusal": 0.276
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.895,
+   "harmful_compliance": 0.045,
+   "over_refusal": 0.5
+  }
+ },
+ "steer": {
+  "description": "SFT + refusal-direction steering",
+  "chrf": null,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.9167,
+   "harmful_compliance": 0.0167,
+   "over_refusal": 0.1833
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.8667,
+   "harmful_compliance": 0.0222,
+   "over_refusal": 0.3556
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.8364,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.08
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.96,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.712
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.99,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.91
+  }
+ },
+ "revert_top8": {
+  "description": "SFT reverted toward Fire on the top-8 circuit layers",
+  "chrf": 43.56,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.5167,
+   "harmful_compliance": 0.3667,
+   "over_refusal": 0.0167
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.3778,
+   "harmful_compliance": 0.5111,
+   "over_refusal": 0.0444
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.6152,
+   "harmful_compliance": 0.0182,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.845,
+   "harmful_compliance": 0.035,
+   "over_refusal": 0.248
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.885,
+   "harmful_compliance": 0.055,
+   "over_refusal": 0.39
+  }
+ },
+ "revert_rand8": {
+  "description": "SFT reverted toward Fire on 8 random layers (control)",
+  "chrf": 45.16,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.4167,
+   "harmful_compliance": 0.4333,
+   "over_refusal": 0.0167
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.3333,
+   "harmful_compliance": 0.6,
+   "over_refusal": 0.0222
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.5242,
+   "harmful_compliance": 0.0364,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.895,
+   "harmful_compliance": 0.01,
+   "over_refusal": 0.368
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.91,
+   "harmful_compliance": 0.04,
+   "over_refusal": 0.58
+  }
+ },
+ "revert_all": {
+  "description": "SFT reverted toward Fire on all layers (WiSE 0.5)",
+  "chrf": 40.57,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.7333,
+   "harmful_compliance": 0.1333,
+   "over_refusal": 0.0
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.4889,
+   "harmful_compliance": 0.3333,
+   "over_refusal": 0.0
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.6636,
+   "harmful_compliance": 0.0061,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.88,
+   "harmful_compliance": 0.01,
+   "over_refusal": 0.272
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.935,
+   "harmful_compliance": 0.035,
+   "over_refusal": 0.57
+  }
+ },
+ "harden": {
+  "description": "SFT on Bitext + safety mix v1",
+  "chrf": 48.47,
+  "banking_test/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.2167
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.1556
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.9879,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.456
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.908
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.995
+  }
+ },
+ "harden_wise": {
+  "description": "harden v1, 50/50 merge with Fire",
+  "chrf": 39.33,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.8667,
+   "harmful_compliance": 0.0333,
+   "over_refusal": 0.0
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.7333,
+   "harmful_compliance": 0.1111,
+   "over_refusal": 0.0
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.8818,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.016
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.99,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.516
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.915
+  }
+ },
+ "harden2": {
+  "description": "SFT on Bitext + safety mix v2 (adds edgy-but-safe examples)",
+  "chrf": 48.38,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.9833,
+   "harmful_compliance": 0.0167,
+   "over_refusal": 0.0667
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.0444
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.9727,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.176
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.712
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.99,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.615
+  }
+ },
+ "harden2_wise": {
+  "description": "harden v2, 50/50 merge with Fire",
+  "chrf": 39.39,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.8167,
+   "harmful_compliance": 0.1167,
+   "over_refusal": 0.0
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.7556,
+   "harmful_compliance": 0.1556,
+   "over_refusal": 0.0222
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.8121,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.965,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.356
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.99,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.595
+  }
+ },
+ "harden2_wise3": {
+  "description": "harden v2, 70/30 merge with Fire",
+  "chrf": 44.88,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.9167,
+   "harmful_compliance": 0.0333,
+   "over_refusal": 0.05
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.8667,
+   "harmful_compliance": 0.0222,
+   "over_refusal": 0.0444
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.9091,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.04
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.58
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.99,
+   "harmful_compliance": 0.005,
+   "over_refusal": 0.595
+  }
+ }
+}
