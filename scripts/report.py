@@ -27,6 +27,11 @@ MODELS = [  # tag, run that holds its metrics, description
     ("harden2", "harden2", "SFT on Bitext + safety mix v2 (adds edgy-but-safe examples)"),
     ("harden2_wise", "harden2", "harden v2, 50/50 merge with Fire"),
     ("harden2_wise3", "harden2", "harden v2, 70/30 merge with Fire"),
+    ("harden3", "harden3", "SFT on Bitext + safety mix v3 (PolyGuardMix, Nemotron Hindi)"),
+    ("harden3_wise3", "harden3", "harden v3, 70/30 merge with Fire"),
+    ("dpo", "curator", "harden2_wise3 + DPO on CuratorKIT pairs, round 1 (113 pairs)"),
+    ("dpo2", "curator2", "harden2_wise3 + DPO on CuratorKIT pairs, round 2 (932 pairs)"),
+    ("dpo2_mix05", "dpomix", "DPO round 2, 50/50 merge with harden2_wise3"),
 ]
 COLS = [("banking_test/all", "Banking test"), ("banking/hinglish", "Banking Hinglish"),
         ("indicsafe_hi/all", "IndicSafe Hindi"), ("xstest/all", "XSTest"), ("orbench/all", "OR-Bench")]
