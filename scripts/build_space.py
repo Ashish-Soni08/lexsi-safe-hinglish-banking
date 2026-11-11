@@ -214,7 +214,7 @@ def main() -> None:
             .replace("__EXAMPLES__", examples(runs, files)))
     (out / "index.html").write_text(page)
     (out / "README.md").write_text("---\ntitle: Why the banking bot refuses\nemoji: 🏦\ncolorFrom: green\ncolorTo: gray\nsdk: static\npinned: false\n"
-                                   "license: cc-by-nc-4.0\nshort_description: Interpretability and audit of a safe Hinglish banking assistant\n---\n")
+                                   "license: cc-by-nc-4.0\nshort_description: Circuits and audit of a safe Hinglish banking bot\n---\n")
     print("wrote", sorted(p.name for p in out.iterdir()))
     if args.push:
         from huggingface_hub import HfApi
