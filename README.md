@@ -78,8 +78,8 @@ Full table with every variant: `results/RESULTS.md`. Significance (AuditKIT pair
 1. **Benign banking SFT erodes refusals**, mostly by teaching the model one template ("I'm here to help you with
    …") that it then applies to fraud requests too. Hinglish was already the weak spot before SFT (Fire refuses only
    47% of Hinglish fraud requests).
-2. **Safety-vector repairs did not help here.** ReSta, SafeMerge and C-ΔΘ all add `Fire − Base`; but the SFT model
-   already contains that vector, and the drift came from the banking data, not from losing it.
+2. **Safety-vector repairs did not help here.** ReSta, SafeMerge and C-ΔΘ all rely on the `Fire − Base` difference;
+   the SFT model already contains it, and the drift came from the banking data, not from losing it.
 3. **The circuit matters, a bit.** Reverting the 8 CircuitKIT layers toward Fire beats reverting 8 random layers
    (52% vs 42% refusal, 37% vs 43% compliance on the test half) while keeping more banking quality than a full revert.
 4. **Steering over-refuses.** The refusal direction raises banking refusals to 92% but refuses 71–99% of
