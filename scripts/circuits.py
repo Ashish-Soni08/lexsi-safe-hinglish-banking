@@ -18,6 +18,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 from lexsi_a.common import load_slice  # noqa: E402
 
 TASK = "banking_hinglish_refusal"
+BASE = "CohereLabs/tiny-aya-fire"
 
 
 def register() -> None:
@@ -60,8 +61,20 @@ def main() -> None:
     circuits = {}
     for spec in args.models:
         tag, model = spec.split("=", 1)
+        if (out / f"{tag}_scores.json").exists():
+            print("reusing", tag)
+            circuits[tag] = json.loads((out / f"{tag}_scores.json").read_text())["node_scores"]
+            continue
         torch.manual_seed(0)
-        hooked = ck.load_model(model, algorithm="eap-ig")
+        if model == BASE:
+            hooked = ck.load_model(model, algorithm="eap-ig")
+        else:
+            # TransformerLens only knows the registered tiny-aya repo IDs, so load the Fire config and
+            # hand it the fine-tuned weights (same Cohere2 architecture).
+            from transformers import AutoModelForCausalLM
+            hf = AutoModelForCausalLM.from_pretrained(model, dtype=torch.bfloat16)
+            hooked = ck.load_model(BASE, algorithm="eap-ig", hf_model=hf)
+            del hf
         ck.discover(hooked, TASK, algorithm="eap-ig", level="node", n_examples=32, batch_size=4, sparsity=0.3,
                     output_path=str(out / f"{tag}.pt"))
         del hooked
