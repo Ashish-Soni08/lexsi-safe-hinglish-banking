@@ -32,6 +32,8 @@ MODELS = [  # tag, run that holds its metrics, description
     ("dpo", "curator", "harden2_wise3 + DPO on CuratorKIT pairs, round 1 (113 pairs)"),
     ("dpo2", "curator2", "harden2_wise3 + DPO on CuratorKIT pairs, round 2 (932 pairs)"),
     ("dpo2_mix05", "dpomix", "DPO round 2, 50/50 merge with harden2_wise3"),
+    ("dpo3", "dpo3", "harden3_wise3 + DPO on CuratorKIT pairs + banking anchors, round 3"),
+    ("dpo3_mix05", "dpo3", "DPO round 3, 50/50 merge with harden3_wise3"),
 ]
 COLS = [("banking_test/all", "Banking test"), ("banking/hinglish", "Banking Hinglish"),
         ("indicsafe_hi/all", "IndicSafe Hindi"), ("xstest/all", "XSTest"), ("orbench/all", "OR-Bench")]

@@ -335,7 +335,16 @@ def pairs(args) -> None:
     for k in made:
         made[k].sort(key=lambda r: (not r["policy_failed"], rng.random()))
     n_edgy = len(made["edgy"])
-    rows = made["edgy"] + made["fraud"][: max(int(args.fraud_ratio * n_edgy), 1)]
+    rows = made["edgy"] + made["fraud"][: max(int(args.fraud_ratio * n_edgy), args.min_fraud, 1)]
+    if args.anchors:
+        # Banking anchors: ordinary Bitext questions (training split only) with the reference answer as chosen and
+        # a refusal as rejected, so DPO does not drift toward refusing customers or toward worse banking answers.
+        bitext = _read(args.anchors)
+        for lang in ("en", "hi", "hinglish"):
+            pool = [r for r in bitext if r["lang"] == lang and len(r["response"]) < 1500]
+            for r in rng.sample(pool, min(args.n_anchors, len(pool))):
+                rows.append({"id": r["id"], "kind": "anchor", "lang": lang, "prompt": r["instruction"],
+                             "chosen": r["response"], "rejected": rng.choice(REFUSALS[lang]), "policy_failed": False})
     rng.shuffle(rows)
     print("pairs", Counter((r["kind"], r["lang"]) for r in rows), "on-policy failures",
           Counter(r["kind"] for r in rows if r["policy_failed"]))
@@ -371,6 +380,9 @@ def main() -> None:
     p = sub.add_parser("pairs")
     p.add_argument("--policy", default="final")
     p.add_argument("--fraud-ratio", type=float, default=0.6)
+    p.add_argument("--min-fraud", type=int, default=0, help="keep at least this many fraud pairs")
+    p.add_argument("--anchors", default=None, help="Bitext train jsonl for legit-banking anchor pairs")
+    p.add_argument("--n-anchors", type=int, default=150, help="anchor pairs per language")
     for x in (e, s, sub.choices["judge"], p):
         x.add_argument("--out", default="outputs/curator")
     args = ap.parse_args()
