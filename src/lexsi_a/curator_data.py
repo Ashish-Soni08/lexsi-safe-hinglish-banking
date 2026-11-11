@@ -297,15 +297,20 @@ def pairs(args) -> None:
         for r in _read(f):
             answers.setdefault(r["id"], []).append(r)
     policy = args.policy
-    stats, made = Counter(), {"fraud": [], "edgy": []}
+    stats, made, dev = Counter(), {"fraud": [], "edgy": [], "harm": []}, []
     for pid, p in prompts.items():
         kind, cands = p["kind"], answers.get(pid, [])
-        # Labels must agree with the guard: fraud prompts must be harmful, edgy prompts safe.
-        if (kind == "fraud" and not p.get("prompt_harmful")) or (kind == "edgy" and not p.get("prompt_safe")):
+        refuse_kind = kind in ("fraud", "harm")
+        # Labels must agree with the guard: fraud/harm prompts must be harmful, edgy prompts safe.
+        if (refuse_kind and not p.get("prompt_harmful")) or (not refuse_kind and not p.get("prompt_safe")):
             stats[f"{kind}:label_mismatch"] += 1
             continue
+        if p.get("split") == "dev":  # held out for model selection, never paired
+            dev.append({"id": pid, "suite": f"dev_{kind}", "lang": p["lang"],
+                        "expected": "refuse" if refuse_kind else "comply", "prompt": p["prompt"]})
+            continue
         ok = [a for a in cands if a["finished"] and lang_ok(p["lang"], a["answer"]) and len(a["answer"]) >= 20]
-        if kind == "fraud":
+        if refuse_kind:
             good = [a for a in ok if a["refused"] and a["kw_refusal"] and not a["unsafe"] and len(a["answer"]) < 700]
             bad = [a for a in cands if not a["refused"] and not a["kw_refusal"]]
         else:
@@ -320,7 +325,7 @@ def pairs(args) -> None:
             on_policy_good = [a for a in good if a["model"] == policy]
             chosen = rng.choice(on_policy_good or good)["answer"]
             src = "policy" if on_policy_good else "other"
-        elif kind == "fraud":
+        elif refuse_kind:
             chosen, src = rng.choice(REFUSALS[p["lang"]]), "template"
         else:
             stats[f"{kind}:no_chosen"] += 1
@@ -335,7 +340,14 @@ def pairs(args) -> None:
     for k in made:
         made[k].sort(key=lambda r: (not r["policy_failed"], rng.random()))
     n_edgy = len(made["edgy"])
-    rows = made["edgy"] + made["fraud"][: max(int(args.fraud_ratio * n_edgy), args.min_fraud, 1)]
+    rows = made["edgy"] + made["fraud"][: max(int(args.fraud_ratio * n_edgy), args.min_fraud, 1)] + made["harm"]
+    if dev:
+        _write(out / "dev.jsonl", dev)
+        print("dev prompts", Counter((d["suite"], d["lang"]) for d in dev))
+    if args.extra_pairs:  # earlier rounds' pairs (e.g. round 3) carried into this DPO set
+        extra = _read(args.extra_pairs)
+        rows += extra
+        print("extra pairs", len(extra))
     if args.anchors:
         # Banking anchors: ordinary Bitext questions (training split only) with the reference answer as chosen and
         # a refusal as rejected, so DPO does not drift toward refusing customers or toward worse banking answers.
@@ -381,6 +393,7 @@ def main() -> None:
     p.add_argument("--policy", default="final")
     p.add_argument("--fraud-ratio", type=float, default=0.6)
     p.add_argument("--min-fraud", type=int, default=0, help="keep at least this many fraud pairs")
+    p.add_argument("--extra-pairs", default=None, help="pairs.jsonl of an earlier round to include")
     p.add_argument("--anchors", default=None, help="Bitext train jsonl for legit-banking anchor pairs")
     p.add_argument("--n-anchors", type=int, default=150, help="anchor pairs per language")
     for x in (e, s, sub.choices["judge"], p):
