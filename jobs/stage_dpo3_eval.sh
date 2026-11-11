@@ -5,8 +5,9 @@
 set -euo pipefail
 RUNS=ashish-soni08/lexsi-a-runs
 hf download --repo-type dataset "$RUNS" fixinst/outputs/sft/test_trilingual.jsonl --local-dir /tmp/runs --quiet
-hf download --repo-type dataset "$RUNS" --include "dpo3/outputs/dpo_lora/adapter_*" --include "dpo3/outputs/dpo_lora/*.json" \
-  --include "dpo3/outputs/curator/pairs.jsonl" --local-dir /tmp/runs --quiet
+hf download --repo-type dataset "$RUNS" dpo3/outputs/dpo_lora/adapter_config.json dpo3/outputs/dpo_lora/adapter_model.safetensors \
+  dpo3/outputs/dpo_lora/tokenizer.json dpo3/outputs/dpo_lora/tokenizer_config.json dpo3/outputs/curator/pairs.jsonl \
+  --local-dir /tmp/runs --quiet
 mkdir -p outputs/sft outputs/curator && cp /tmp/runs/fixinst/outputs/sft/test_trilingual.jsonl outputs/sft/
 cp /tmp/runs/dpo3/outputs/curator/pairs.jsonl outputs/curator/
 hf download ashish-soni08/tiny-aya-fire-banking-harden3 --local-dir /tmp/harden3 --quiet && rm -rf /tmp/harden3/.cache
