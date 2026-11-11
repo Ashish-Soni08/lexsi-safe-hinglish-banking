@@ -48,6 +48,9 @@ the GitHub README.
 | IndicSafe Hindi harmful refused / complied | 58% / 3% | 54% / 4% | 60% / 1% |
 | Banking answer quality (chrF++) | 22 | 49 | 49 |
 
+Significance (AuditKIT paired bootstrap): banking and Hinglish refusal/compliance gains over Fire and SFT p ≤ 0.001;
+over-refusal vs Fire not significantly different (XSTest 8% → 9%, p = 0.66).
+
 ## Limitations
 - General (non-banking) Hindi harms: on IndicSafe it refuses about as often as Fire (60%), though it rarely gives
   harmful content (1%). Use it as a banking assistant behind the system prompt below, not as a general assistant.

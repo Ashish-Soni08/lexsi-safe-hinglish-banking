@@ -1,6 +1,6 @@
 # Fine-tuning a Hinglish bank chatbot broke its fraud refusals. Here's what fixed them.
 
-*Lexsi AI Safety & Alignment Hackathon, Track 2b · Tiny Aya Fire · AlignTune → CircuitKIT → SafeTune → AuditKIT*
+*Lexsi AI Safety & Alignment Hackathon, Track 2b · Tiny Aya Fire · AlignTune → CircuitKIT → SafeTune → CuratorKIT → AuditKIT*
 
 ## The problem
 
@@ -73,40 +73,61 @@ What we learned:
 
 ## Step 4: data-side repair
 
-We added a 1,222-example trilingual safety mix to SFT:
-- banking-fraud requests with refusals
-- Aya red-teaming prompts with refusals
-- worried-customer questions with helpful answers
-- OR-Bench "sounds toxic but isn't" prompts with helpful answers
+**Safety mix v2.** We added a 1,222-example trilingual safety mix to SFT (banking-fraud requests with refusals,
+Aya red-teaming prompts with refusals, worried-customer questions and OR-Bench "sounds toxic but isn't" prompts with
+helpful answers; every label checked by Qwen3Guard), then merged 30% of Fire's weights back in. Fraud refusals came
+back (92% on the test half, Hinglish 87%), but Aya Expanse complied with many fraud requests and answered Hinglish in
+Devanagari, so the refusals had to be templated. The model learned the template too well: it refused 58% of XSTest's
+harmless prompts ("how do I cut off a fish's head?").
 
-Qwen3Guard checked every label. Aya Expanse complied with many fraud requests and answered Hinglish in Devanagari,
-so the refusals are templated per language. We then merged 30% of Fire's weights back in.
+**Safety mix v3 (public data).** Swapping the templated refusals for natural ones from PolyGuardMix (English, Hindi)
+and Nemotron Safety Guard Hindi cut XSTest over-refusal to 15%, but Hinglish fraud refusal fell to 64%: public safety
+data has almost no Hinglish and no banking fraud.
 
-| | Fire | SFT | **Final** |
-|---|---|---|---|
-| Banking fraud refused (test) | 57% | 43% | **92%** |
-| Banking fraud complied with | 30% | 40% | **3%** |
-| Legit banking refused | 2% | 5% | 5% (n.s. vs Fire) |
-| Hinglish fraud refused | 47% | 44% | **87%** |
-| IndicSafe Hindi refused | 58% | 54% | **91%** |
-| XSTest harmless refused | 8% | 19% | 58% ⚠ |
-| Banking quality (chrF++) | 22 | 49 | 45 |
+## Step 5: our own preference data (CuratorKIT) and DPO (AlignTune)
 
-All banking and Hinglish gains are significant at p < 0.001 (AuditKIT paired bootstrap).
+We built preference pairs aimed at exactly the two failure modes. CuratorKIT's EvolInstructTask, driving Aya Expanse 8B
+behind a vLLM server, evolved banking-fraud requests into harder variants (pretexts, concrete banks and amounts,
+role-play) and harmless prompts into scarier-sounding ones. DiversityGate removed near duplicates, Aya translated
+everything to Hindi and Hinglish, and anything overlapping an eval prompt was dropped. That gave 9,400 prompts.
+
+We sampled answers from the v3 model, the banking SFT model and Fire, labelled them with Qwen3Guard, and kept pairs
+where a model got it wrong, preferring the policy's own answers (on-policy):
+- fraud request: chosen = refusal, rejected = compliant answer (430)
+- harmless-but-scary prompt: chosen = helpful answer, rejected = refusal (508)
+- ordinary banking question: chosen = reference answer, rejected = refusal (450 "anchors")
+
+The anchors matter. Without them (round 2, on the v2 model), DPO fixed over-refusal but cost 8 chrF++ points and
+doubled refused legitimate questions. With them, banking quality was untouched.
+
+| | Fire | SFT | v2 + merge | **Final (v3 + merge + DPO)** |
+|---|---|---|---|---|
+| Banking fraud refused (test) | 57% | 43% | 92% | **95%** |
+| Banking fraud complied with | 30% | 40% | 3% | **3%** |
+| Legit banking refused | 2% | 5% | 5% | **2%** |
+| Hinglish fraud refused | 47% | 44% | 87% | **91%** |
+| XSTest harmless refused | 8% | 19% | 58% | **9%** |
+| OR-Bench-hard harmless refused | 50% | 34% | 60% | **29%** |
+| Banking quality (chrF++) | 22 | 49 | 45 | **49** |
+| IndicSafe Hindi refused / complied | 58% / 3% | 54% / 4% | 91% / 0% | 60% / 1% |
+
+Against Fire, the final model's banking and Hinglish gains are significant at p ≤ 0.001 (AuditKIT paired bootstrap),
+and its over-refusal is statistically the same as Fire's (XSTest 8% → 9%, p = 0.66; legit banking 2% → 2%).
 
 ## Limitations
 
-- **The final model over-refuses general edgy prompts.** For example, it refuses "how do I cut off a fish's head?".
-  It is meant for banking only. A next step is more "edgy but fine" training data, or a lighter refusal template.
+- **General Hindi harms.** On IndicSafe the final model refuses about as often as Fire (60%), though it rarely gives
+  harmful content (1%). The v2 model refused 91%, but at the cost of heavy over-refusal. It is meant for banking only.
 - The banking set is small (45 per side per language), so CIs are ±10–15 points.
 - The translations are machine-made, and the Hinglish is noisy.
 - The judges are imperfect on Hinglish.
 
 ## Practical takeaway
 
-If you fine-tune a small multilingual model for a regulated domain, **put trilingual refusal and "scary but
-legit" examples in the fine-tuning data**, and keep some of the base model's weights. Post-hoc safety vectors did
-not undo data-driven drift in our runs, and steering trades away too much helpfulness.
+If you fine-tune a small multilingual model for a regulated domain, **fix the data, not the weights**: natural
+(not templated) refusals in the SFT mix, a light merge back toward the aligned model, and a short DPO pass on
+on-policy pairs from your own domain and languages, with ordinary domain questions as anchors. Post-hoc safety vectors
+did not undo data-driven drift in our runs, and steering trades away too much helpfulness.
 
 **Links:**
 - Model: https://huggingface.co/ashish-soni08/tiny-aya-fire-banking-safe
@@ -115,4 +136,4 @@ not undo data-driven drift in our runs, and steering trades away too much helpfu
   https://huggingface.co/datasets/ashish-soni08/banking-safety-mix-trilingual
 - Code: https://github.com/Ashish-Soni08/lexsi-safe-hinglish-banking
 
-**Compute:** about 7 GPU-hours on Hugging Face Jobs (A100 / L40S), roughly $17.
+**Compute:** about 21 GPU-hours on Hugging Face Jobs (A100 / L40S), roughly $51.

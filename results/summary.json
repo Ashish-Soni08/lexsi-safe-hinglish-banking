@@ -433,5 +433,208 @@
    "harmful_compliance": 0.005,
    "over_refusal": 0.595
   }
+ },
+ "harden3": {
+  "description": "SFT on Bitext + safety mix v3 (PolyGuardMix, Nemotron Hindi)",
+  "chrf": 48.23,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.8,
+   "harmful_compliance": 0.1167,
+   "over_refusal": 0.0333
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.6444,
+   "harmful_compliance": 0.3111,
+   "over_refusal": 0.0667
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.6758,
+   "harmful_compliance": 0.0242,
+   "over_refusal": 0.008
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.925,
+   "harmful_compliance": 0.01,
+   "over_refusal": 0.152
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.975,
+   "harmful_compliance": 0.01,
+   "over_refusal": 0.63
+  }
+ },
+ "harden3_wise3": {
+  "description": "harden v3, 70/30 merge with Fire",
+  "chrf": 45.36,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.7667,
+   "harmful_compliance": 0.15,
+   "over_refusal": 0.0333
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.6444,
+   "harmful_compliance": 0.2667,
+   "over_refusal": 0.0222
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.6667,
+   "harmful_compliance": 0.0091,
+   "over_refusal": 0.008
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.895,
+   "harmful_compliance": 0.02,
+   "over_refusal": 0.152
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.98,
+   "harmful_compliance": 0.005,
+   "over_refusal": 0.63
+  }
+ },
+ "dpo": {
+  "description": "harden2_wise3 + DPO on CuratorKIT pairs, round 1 (113 pairs)",
+  "chrf": 44.82,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.9167,
+   "harmful_compliance": 0.0333,
+   "over_refusal": 0.05
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.8889,
+   "harmful_compliance": 0.0222,
+   "over_refusal": 0.0444
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.9091,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.04
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.572
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.99,
+   "harmful_compliance": 0.005,
+   "over_refusal": 0.59
+  }
+ },
+ "dpo2": {
+  "description": "harden2_wise3 + DPO on CuratorKIT pairs, round 2 (932 pairs)",
+  "chrf": 37.26,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.9833,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.1
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.9556,
+   "harmful_compliance": 0.0222,
+   "over_refusal": 0.1111
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.7667,
+   "harmful_compliance": 0.0061,
+   "over_refusal": 0.024
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.98,
+   "harmful_compliance": 0.005,
+   "over_refusal": 0.388
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.94,
+   "harmful_compliance": 0.02,
+   "over_refusal": 0.345
+  }
+ },
+ "dpo2_mix05": {
+  "description": "DPO round 2, 50/50 merge with harden2_wise3",
+  "chrf": 41.99,
+  "banking_test/all": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.0833
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 1.0,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.1333
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.8545,
+   "harmful_compliance": 0.003,
+   "over_refusal": 0.016
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.985,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.484
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.98,
+   "harmful_compliance": 0.0,
+   "over_refusal": 0.495
+  }
+ },
+ "dpo3": {
+  "description": "harden3_wise3 + DPO on CuratorKIT pairs + banking anchors, round 3",
+  "chrf": 48.73,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.95,
+   "harmful_compliance": 0.0333,
+   "over_refusal": 0.0167
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.9111,
+   "harmful_compliance": 0.0444,
+   "over_refusal": 0.0222
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.597,
+   "harmful_compliance": 0.0091,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.825,
+   "harmful_compliance": 0.01,
+   "over_refusal": 0.088
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.905,
+   "harmful_compliance": 0.06,
+   "over_refusal": 0.29
+  }
+ },
+ "dpo3_mix05": {
+  "description": "DPO round 3, 50/50 merge with harden3_wise3",
+  "chrf": 47.67,
+  "banking_test/all": {
+   "refusal_on_harmful": 0.9333,
+   "harmful_compliance": 0.05,
+   "over_refusal": 0.0
+  },
+  "banking/hinglish": {
+   "refusal_on_harmful": 0.8222,
+   "harmful_compliance": 0.1111,
+   "over_refusal": 0.0222
+  },
+  "indicsafe_hi/all": {
+   "refusal_on_harmful": 0.6152,
+   "harmful_compliance": 0.0212,
+   "over_refusal": 0.0
+  },
+  "xstest/all": {
+   "refusal_on_harmful": 0.85,
+   "harmful_compliance": 0.005,
+   "over_refusal": 0.104
+  },
+  "orbench/all": {
+   "refusal_on_harmful": 0.94,
+   "harmful_compliance": 0.02,
+   "over_refusal": 0.445
+  }
  }
 }

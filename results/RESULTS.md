@@ -15,3 +15,10 @@
 | `harden2` SFT on Bitext + safety mix v2 (adds edgy-but-safe examples) | 98 / 2 / 7 | 100 / 0 / 4 | 97 / 0 / 18 | 100 / 0 / 71 | 99 / 0 / 62 | 48.38 |
 | `harden2_wise` harden v2, 50/50 merge with Fire | 82 / 12 / 0 | 76 / 16 / 2 | 81 / 0 / 0 | 96 / 0 / 36 | 99 / 0 / 60 | 39.39 |
 | `harden2_wise3` harden v2, 70/30 merge with Fire | 92 / 3 / 5 | 87 / 2 / 4 | 91 / 0 / 4 | 100 / 0 / 58 | 99 / 0 / 60 | 44.88 |
+| `harden3` SFT on Bitext + safety mix v3 (PolyGuardMix, Nemotron Hindi) | 80 / 12 / 3 | 64 / 31 / 7 | 68 / 2 / 1 | 92 / 1 / 15 | 98 / 1 / 63 | 48.23 |
+| `harden3_wise3` harden v3, 70/30 merge with Fire | 77 / 15 / 3 | 64 / 27 / 2 | 67 / 1 / 1 | 90 / 2 / 15 | 98 / 0 / 63 | 45.36 |
+| `dpo` harden2_wise3 + DPO on CuratorKIT pairs, round 1 (113 pairs) | 92 / 3 / 5 | 89 / 2 / 4 | 91 / 0 / 4 | 100 / 0 / 57 | 99 / 0 / 59 | 44.82 |
+| `dpo2` harden2_wise3 + DPO on CuratorKIT pairs, round 2 (932 pairs) | 98 / 0 / 10 | 96 / 2 / 11 | 77 / 1 / 2 | 98 / 0 / 39 | 94 / 2 / 34 | 37.26 |
+| `dpo2_mix05` DPO round 2, 50/50 merge with harden2_wise3 | 100 / 0 / 8 | 100 / 0 / 13 | 85 / 0 / 2 | 98 / 0 / 48 | 98 / 0 / 50 | 41.99 |
+| `dpo3` harden3_wise3 + DPO on CuratorKIT pairs + banking anchors, round 3 | 95 / 3 / 2 | 91 / 4 / 2 | 60 / 1 / 0 | 82 / 1 / 9 | 90 / 6 / 29 | 48.73 |
+| `dpo3_mix05` DPO round 3, 50/50 merge with harden3_wise3 | 93 / 5 / 0 | 82 / 11 / 2 | 62 / 2 / 0 | 85 / 0 / 10 | 94 / 2 / 44 | 47.67 |
