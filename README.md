@@ -100,6 +100,9 @@ Full table with every variant: `results/RESULTS.md`. Significance (AuditKIT pair
 7. **Our own preference data closes the gap.** CuratorKIT-built, on-policy DPO pairs (fraud refusals, over-refusal
    fixes, and ordinary banking questions as anchors) on top of mix v3 give the best of both. Without the banking
    anchors, DPO cost 8 chrF++ points and doubled refused legitimate questions; with them, quality is unchanged.
+8. **More Hindi safety costs over-refusal.** A fourth DPO round with contrastive Hindi / Hinglish pairs
+   (`src/lexsi_a/hindi_round.py`, picked on dev prompts by `src/lexsi_a/dev_select.py`) raised IndicSafe refusal
+   60% → 79% but OR-Bench over-refusal 29% → 58%; a 50/50 blend with round 3 landed halfway. Round 3 stays final.
 
 ## Reproduce
 

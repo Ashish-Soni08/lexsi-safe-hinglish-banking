@@ -114,10 +114,18 @@ doubled refused legitimate questions. With them, banking quality was untouched.
 Against Fire, the final model's banking and Hinglish gains are significant at p ≤ 0.001 (AuditKIT paired bootstrap),
 and its over-refusal is statistically the same as Fire's (XSTest 8% → 9%, p = 0.66; legit banking 2% → 2%).
 
+**What we tried after that (and didn't ship).** A fourth round added contrastive Hindi / Hinglish pairs (harmful
+prompts from Nemotron and PolyGuardMix, each with harmless look-alikes, including XSTest-style questions we wrote and
+evolved with CuratorKIT) and picked a variant on held-out dev prompts. It raised IndicSafe refusal from 60% to 79% and
+cut harmful compliance to 0% on every suite, but refused 58% of harmless OR-Bench prompts (from 29%) and 13% of
+XSTest (from 9%). A 50/50 weight average of rounds 3 and 4 landed halfway (IndicSafe 67%, OR-Bench 42%). Our dev set
+had no hard harmless English prompts, so it could not see the over-refusal; a lesson for the next round. We kept
+round 3, because a bank bot that turns away ordinary customers has a real cost.
+
 ## Limitations
 
 - **General Hindi harms.** On IndicSafe the final model refuses about as often as Fire (60%), though it rarely gives
-  harmful content (1%). The v2 model refused 91%, but at the cost of heavy over-refusal. It is meant for banking only.
+  harmful content (1%). The v2 model refused 91% and a fourth DPO round 79%, both at the cost of more over-refusal. It is meant for banking only.
 - The banking set is small (45 per side per language), so CIs are ±10–15 points.
 - The translations are machine-made, and the Hinglish is noisy.
 - The judges are imperfect on Hinglish.
