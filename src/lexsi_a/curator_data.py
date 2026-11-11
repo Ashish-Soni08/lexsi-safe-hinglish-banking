@@ -171,11 +171,21 @@ def evolve(args) -> None:
         v2 = _read(args.seeds_v2)
         fraud_seeds = [r["instruction"] for r in v2 if r["kind"] == "fraud" and r["lang"] == "en"]
         edgy_seeds = EDGY_SEEDS + rng.sample([r["instruction"] for r in v2 if r["kind"] == "benign_edgy"], args.n_orbench)
-        print("seeds", {"fraud": len(fraud_seeds), "edgy": len(edgy_seeds)})
+        jobs_spec = [("fraud", fraud_seeds, FRAUD_EVOL, FRAUD_STRATEGIES), ("edgy", edgy_seeds, EDGY_EVOL, EDGY_STRATEGIES)]
+        if args.orbench_fresh:
+            # Round 2: the round-1 prompts were mostly answered already, so mine many fresh OR-Bench-80k
+            # "seemingly toxic" prompts (none from OR-Bench-hard-1k, which the eval samples, nor from the SFT mix)
+            # and evolve each once toward scarier wording.
+            from datasets import load_dataset
+            seen = {r["instruction"] for r in v2}
+            hard = {r["prompt"] for r in load_dataset("bench-llm/or-bench", "or-bench-hard-1k", split="train")}
+            pool = [r["prompt"] for r in load_dataset("bench-llm/or-bench", "or-bench-80k", split="train")
+                    if r["prompt"] not in hard and r["prompt"] not in seen]
+            jobs_spec = [("edgy", rng.sample(pool, args.orbench_fresh), EDGY_EVOL, EDGY_STRATEGIES[:1])]
+        print("seeds", {k: len(s) for k, s, _, _ in jobs_spec})
 
         rows = []
-        for kind, seeds, tmpl, strategies in (("fraud", fraud_seeds, FRAUD_EVOL, FRAUD_STRATEGIES),
-                                              ("edgy", edgy_seeds, EDGY_EVOL, EDGY_STRATEGIES)):
+        for kind, seeds, tmpl, strategies in jobs_spec:
             task = EvolInstructTask(llm=llm, prompt_template=tmpl, num_evolutions=len(strategies),
                                     strategies=strategies, generate_answers=False, concurrency=32)
             samples = [DataSample(source_uri=f"seed:{kind}", instruction=s, metadata={"kind": kind}) for s in seeds]
@@ -208,6 +218,9 @@ def evolve(args) -> None:
         server.terminate()
         server.wait(timeout=120)
 
+    if args.prev_prompts:  # carry the earlier rounds' prompts (already translated) into this round
+        rows += [{k: v for k, v in r.items() if k not in ("id", "prompt_harmful", "prompt_safe")}
+                 for r in _read(args.prev_prompts)]
     contaminated = contamination_filter()
     before = len(rows)
     rows = [r for r in rows if not contaminated(r["prompt"])]
@@ -348,6 +361,8 @@ def main() -> None:
     e = sub.add_parser("evolve")
     e.add_argument("--seeds-v2", required=True)
     e.add_argument("--n-orbench", type=int, default=60)
+    e.add_argument("--orbench-fresh", type=int, default=0, help="round 2: evolve this many fresh OR-Bench-80k prompts")
+    e.add_argument("--prev-prompts", default=None, help="prompts.jsonl of an earlier round to include")
     s = sub.add_parser("sample")
     s.add_argument("--model", required=True)
     s.add_argument("--tag", required=True)
