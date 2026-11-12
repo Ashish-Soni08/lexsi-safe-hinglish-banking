@@ -2,7 +2,7 @@
 
 Lexsi AI Safety & Alignment Hackathon, Track 2b (safety correction).
 
-**Dashboard:** [Why the banking bot refuses](https://huggingface.co/spaces/ashish-soni08/why-the-banking-bot-refuses) shows the AuditKIT before/after numbers, CircuitKIT refusal circuits for Fire, the banking SFT and the final model, and example answers. Rebuild it with `scripts/build_space.py`.
+**Dashboard:** [Why the banking bot refuses](https://huggingface.co/spaces/ashish-soni08/why-the-banking-bot-refuses) shows the AuditKIT before/after numbers, CircuitKIT refusal circuits for Fire, the banking SFT and the final model, and example answers. Rebuild it with `scripts/build_space.py` (add `--reuse <downloaded space>` to rebuild without the run outputs).
 
 **Question.** If you fine-tune a small multilingual model into an English / Hindi / Hinglish retail-banking
 assistant, how much of its refusal behaviour does it lose (helping with OTP scams, phishing, mule accounts),
