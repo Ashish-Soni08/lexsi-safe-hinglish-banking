@@ -103,6 +103,12 @@ Full table with every variant: `results/RESULTS.md`. Significance (AuditKIT pair
 8. **More Hindi safety costs over-refusal.** A fourth DPO round with contrastive Hindi / Hinglish pairs
    (`src/lexsi_a/hindi_round.py`, picked on dev prompts by `src/lexsi_a/dev_select.py`) raised IndicSafe refusal
    60% → 79% but OR-Bench over-refusal 29% → 58%; a 50/50 blend with round 3 landed halfway. Round 3 stays final.
+9. **Round 3 has little left to mine.** Round 5 (`src/lexsi_a/round5.py`, `jobs/stage_dpo5.sh`) sampled the round-3
+   model 4x on 3,900 fresh OR-Bench-80k prompts in en / hi / Hinglish: it refused only 28 of them on every sample
+   where a good answer existed, and refused 0% of the 330 harmless dev prompts. Harmful Hindi prompts it answered
+   (186) could not be balanced with as many harmless failures, so DPO moved little; no variant beat round 3 on dev.
+   OR-Bench-80k is much easier than OR-Bench-hard, so the remaining over-refusal is on prompts we cannot mine without
+   touching the test set.
 
 ## Reproduce
 
